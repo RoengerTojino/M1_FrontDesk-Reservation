@@ -2,6 +2,7 @@ import java.util.Scanner;
 
 public class Main {
     private static final Scanner sc = new Scanner(System.in);
+    private static final SystemRepository repo = new SystemRepository();
 
     public static void main(String[] args) {
         while (true) {
@@ -9,7 +10,7 @@ public class Main {
             String choice = sc.nextLine();
 
             switch (choice) {
-                case "1" -> System.out.println("Create Reservation - Feature coming soon!");
+                case "1" -> createReservation();
                 case "2" -> System.out.println("Manage Guest Profile - Feature coming soon!");
                 case "3" -> System.out.println("Assign Cabin - Feature coming soon!");
                 case "4" -> System.out.println("Search Reservation - Feature coming soon!");
@@ -21,7 +22,7 @@ public class Main {
                     System.out.println("Exiting Front Desk System. Goodbye!");
                     return;
                 }
-                default -> System.out.println("Invalid option! Please select 1-9.");
+                default -> System.out.println("Invalid option!");
             }
         }
     }
@@ -40,5 +41,56 @@ public class Main {
         System.out.println("[8] Move Reservation");
         System.out.println("[9] Exit");
         System.out.print("\nSelect an option: ");
+    }
+
+    private static void createReservation() {
+        System.out.println("\n=== CREATE RESERVATION ===");
+
+        System.out.print("Guest First Name: ");
+        String firstName = sc.nextLine();
+
+        System.out.print("Guest Last Name: ");
+        String lastName = sc.nextLine();
+
+        String guestId = "G" + System.currentTimeMillis();
+        Guest guest = new Guest(guestId, firstName, lastName);
+
+        System.out.print("Cabin Category (Standard/Deluxe/Suite): ");
+        String category = sc.nextLine();
+
+        // ✅ Pax validation
+        int pax;
+        while (true) {
+            System.out.print("Number of Guests: ");
+            try {
+                pax = Integer.parseInt(sc.nextLine());
+                if (pax <= 0) {
+                    System.out.println("❌ Pax must be greater than 0.");
+                    continue;
+                }
+
+                // Fetch cabin max_pax from DB
+                int maxPax = repo.getMaxPaxForCategory(category);
+                if (pax > maxPax) {
+                    System.out.println("❌ Exceeds maximum allowed pax for this cabin (" + maxPax + ").");
+                    continue;
+                }
+
+                break;
+            } catch (Exception e) {
+                System.out.println("❌ Invalid number.");
+            }
+        }
+
+        System.out.print("Check-in Date (YYYY-MM-DD): ");
+        String checkIn = sc.nextLine();
+
+        System.out.print("Check-out Date (YYYY-MM-DD): ");
+        String checkOut = sc.nextLine();
+
+        repo.createReservation(guest, category, pax, checkIn, checkOut);
+
+        System.out.println("\nPress Enter to return...");
+        sc.nextLine();
     }
 }
