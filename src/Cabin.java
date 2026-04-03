@@ -1,23 +1,17 @@
 public class Cabin {
-    private String cabinId;
-    private String category;
-    private boolean isAvailable;
+    private String CABIN_ID;
+    private String CATEGORY;
 
     public Cabin(String cabinId, String category) {
-        this.cabinId = cabinId;
-        this.category = category;
-        this.isAvailable = true;
+        this.CABIN_ID = cabinId;
+        this.CATEGORY = category;
     }
 
     public String getCabinId() {
-        return cabinId;
+        return CABIN_ID;
     }
 
     public String getCategory() {
-        return category;
-    }
-
-    public boolean isAvailable() {
-        return isAvailable;
+        return CATEGORY;
     }
 }

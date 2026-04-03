@@ -1,19 +1,27 @@
 public class Guest {
-    private String guestId;
-    private String firstName;
-    private String lastName;
+    private String GUEST_ID;
+    private String FIRST_NAME;
+    private String LAST_NAME;
 
     public Guest(String guestId, String firstName, String lastName) {
-        this.guestId = guestId;
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.GUEST_ID = guestId;
+        this.FIRST_NAME = firstName;
+        this.LAST_NAME = lastName;
     }
 
     public String getGuestId() {
-        return guestId;
+        return GUEST_ID;
+    }
+
+    public String getFirstName() {
+        return FIRST_NAME;
+    }
+
+    public String getLastName() {
+        return LAST_NAME;
     }
 
     public String getFullName() {
-        return firstName + " " + lastName;
+        return FIRST_NAME + " " + LAST_NAME;
     }
 }
