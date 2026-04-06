@@ -394,4 +394,63 @@ public class SystemRepository {
             e.printStackTrace();
         }
     }
+    public void cancelReservation(String reservationId) {
+
+        String getRes = "SELECT cabin_id, status FROM reservations WHERE reservation_id = ?";
+        String updateRes = "UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?";
+        String updateCabin = "UPDATE cabins SET is_available = 1 WHERE cabin_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+
+            conn.setAutoCommit(false);
+
+            String cabinId = null;
+
+            // 1. Check reservation
+            try (PreparedStatement ps = conn.prepareStatement(getRes)) {
+                ps.setString(1, reservationId);
+                ResultSet rs = ps.executeQuery();
+
+                if (!rs.next()) {
+                    System.out.println("❌ Reservation not found.");
+                    return;
+                }
+
+                String status = rs.getString("status");
+                cabinId = rs.getString("cabin_id");
+
+                if ("Cancelled".equalsIgnoreCase(status)) {
+                    System.out.println("⚠️ Reservation already cancelled.");
+                    return;
+                }
+
+                if ("Checked-Out".equalsIgnoreCase(status)) {
+                    System.out.println("❌ Cannot cancel a checked-out reservation.");
+                    return;
+                }
+            }
+
+            // 2. Update reservation status
+            try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
+                ps.setString(1, reservationId);
+                ps.executeUpdate();
+            }
+
+            // 3. Free cabin if assigned
+            if (cabinId != null) {
+                try (PreparedStatement ps = conn.prepareStatement(updateCabin)) {
+                    ps.setString(1, cabinId);
+                    ps.executeUpdate();
+                }
+            }
+
+            conn.commit();
+
+            System.out.println("✅ Reservation cancelled successfully!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
