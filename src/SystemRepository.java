@@ -243,4 +243,57 @@ public class SystemRepository {
             e.printStackTrace();
         }
     }
+    public void searchReservationById(String reservationId) {
+        String sql = "SELECT * FROM reservations WHERE reservation_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, reservationId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                displayReservation(rs);
+            } else {
+                System.out.println("❌ Reservation not found.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void searchReservationByGuest(String guestId) {
+        String sql = "SELECT * FROM reservations WHERE guest_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, guestId);
+            ResultSet rs = ps.executeQuery();
+
+            boolean found = false;
+
+            while (rs.next()) {
+                found = true;
+                displayReservation(rs);
+            }
+
+            if (!found) {
+                System.out.println("❌ No reservations found.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private void displayReservation(ResultSet rs) throws SQLException {
+        System.out.println("\n=== RESERVATION ===");
+        System.out.println("ID: " + rs.getString("reservation_id"));
+        System.out.println("Guest ID: " + rs.getString("guest_id"));
+        System.out.println("Cabin ID: " + rs.getString("cabin_id"));
+        System.out.println("Pax: " + rs.getInt("pax_count"));
+        System.out.println("Check-in: " + rs.getString("check_in_date"));
+        System.out.println("Check-out: " + rs.getString("check_out_date"));
+        System.out.println("Status: " + rs.getString("status"));
+    }
 }
