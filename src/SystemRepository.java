@@ -113,4 +113,71 @@ public class SystemRepository {
         }
         return 0; // fallback
     }
+    public void addGuest(Guest guest) {
+        String sql = "INSERT INTO guests (guest_id, first_name, last_name) VALUES (?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, guest.getGuestId());
+            ps.setString(2, guest.getFirstName());
+            ps.setString(3, guest.getLastName());
+
+            ps.executeUpdate();
+
+            System.out.println("✅ Guest added! ID: " + guest.getGuestId());
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public void searchGuestById(String guestId) {
+        String sql = "SELECT * FROM guests WHERE guest_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, guestId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                System.out.println("\n✅ Guest Found:");
+                System.out.println("ID: " + rs.getString("guest_id"));
+                System.out.println("Name: " + rs.getString("first_name") + " " + rs.getString("last_name"));
+            } else {
+                System.out.println("❌ No guest found.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public void searchGuestByName(String name) {
+        String sql = "SELECT * FROM guests WHERE first_name LIKE ? OR last_name LIKE ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + name + "%");
+            ps.setString(2, "%" + name + "%");
+
+            ResultSet rs = ps.executeQuery();
+
+            boolean found = false;
+
+            while (rs.next()) {
+                found = true;
+                System.out.println("\n--- Guest ---");
+                System.out.println("ID: " + rs.getString("guest_id"));
+                System.out.println("Name: " + rs.getString("first_name") + " " + rs.getString("last_name"));
+            }
+
+            if (!found) {
+                System.out.println("❌ No guest found.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
