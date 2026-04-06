@@ -11,7 +11,7 @@ public class Main {
 
             switch (choice) {
                 case "1" -> createReservation();
-                case "2" -> System.out.println("Manage Guest Profile - Feature coming soon!");
+                case "2" -> manageGuestProfile();
                 case "3" -> System.out.println("Assign Cabin - Feature coming soon!");
                 case "4" -> System.out.println("Search Reservation - Feature coming soon!");
                 case "5" -> System.out.println("Process Check-In - Feature coming soon!");
@@ -91,6 +91,66 @@ public class Main {
         repo.createReservation(guest, category, pax, checkIn, checkOut);
 
         System.out.println("\nPress Enter to return...");
+        sc.nextLine();
+    }
+    private static void manageGuestProfile() {
+        while (true) {
+            System.out.println("\n=== MANAGE GUEST PROFILE ===");
+            System.out.println("[1] Add Guest");
+            System.out.println("[2] Search Guest");
+            System.out.println("[3] Back");
+            System.out.print("Select option: ");
+
+            String choice = sc.nextLine();
+
+            switch (choice) {
+                case "1" -> addGuest();
+                case "2" -> searchGuest();
+                case "3" -> {
+                    return;
+                }
+                default -> System.out.println("Invalid option!");
+            }
+        }
+    }
+    private static void addGuest() {
+        System.out.println("\n=== ADD GUEST ===");
+
+        System.out.print("First Name: ");
+        String firstName = sc.nextLine();
+
+        System.out.print("Last Name: ");
+        String lastName = sc.nextLine();
+
+        String guestId = "G" + System.currentTimeMillis();
+        Guest guest = new Guest(guestId, firstName, lastName);
+
+        repo.addGuest(guest);
+
+        System.out.println("\nPress Enter to continue...");
+        sc.nextLine();
+    }
+    private static void searchGuest() {
+        System.out.println("\n=== SEARCH GUEST ===");
+        System.out.println("[1] By Guest ID");
+        System.out.println("[2] By Name");
+        System.out.print("Select: ");
+
+        String choice = sc.nextLine();
+
+        switch (choice) {
+            case "1" -> {
+                System.out.print("Enter Guest ID: ");
+                repo.searchGuestById(sc.nextLine());
+            }
+            case "2" -> {
+                System.out.print("Enter Name: ");
+                repo.searchGuestByName(sc.nextLine());
+            }
+            default -> System.out.println("Invalid option!");
+        }
+
+        System.out.println("\nPress Enter to continue...");
         sc.nextLine();
     }
 }
