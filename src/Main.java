@@ -15,7 +15,7 @@ public class Main {
                 case "3" -> assignCabin();
                 case "4" -> searchReservation();
                 case "5" -> processCheckIn();
-                case "6" -> System.out.println("Process Check-Out - Feature coming soon!");
+                case "6" -> processCheckOut();
                 case "7" -> System.out.println("Cancel Reservation - Feature coming soon!");
                 case "8" -> System.out.println("Move Reservation - Feature coming soon!");
                 case "9" -> {
@@ -198,6 +198,17 @@ public class Main {
         String reservationId = sc.nextLine();
 
         repo.processCheckIn(reservationId);
+
+        System.out.println("\nPress Enter to continue...");
+        sc.nextLine();
+    }
+    private static void processCheckOut() {
+        System.out.println("\n=== PROCESS CHECK-OUT ===");
+
+        System.out.print("Enter Reservation ID: ");
+        String reservationId = sc.nextLine();
+
+        repo.processCheckOut(reservationId);
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();
