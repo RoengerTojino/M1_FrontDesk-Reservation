@@ -17,7 +17,7 @@ public class Main {
                 case "5" -> processCheckIn();
                 case "6" -> processCheckOut();
                 case "7" -> cancelReservation();
-                case "8" -> System.out.println("Move Reservation - Feature coming soon!");
+                case "8" -> moveReservation();
                 case "9" -> {
                     System.out.println("Exiting Front Desk System. Goodbye!");
                     return;
@@ -220,6 +220,20 @@ public class Main {
         String reservationId = sc.nextLine();
 
         repo.cancelReservation(reservationId);
+
+        System.out.println("\nPress Enter to continue...");
+        sc.nextLine();
+    }
+    private static void moveReservation() {
+        System.out.println("\n=== MOVE RESERVATION ===");
+
+        System.out.print("Enter Reservation ID: ");
+        String reservationId = sc.nextLine();
+
+        System.out.print("Enter New Cabin Category (Standard/Deluxe/Suite): ");
+        String category = sc.nextLine();
+
+        repo.moveReservation(reservationId, category);
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();

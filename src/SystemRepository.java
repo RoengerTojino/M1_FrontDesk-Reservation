@@ -452,5 +452,78 @@ public class SystemRepository {
             e.printStackTrace();
         }
     }
+    public void moveReservation(String reservationId, String newCategory) {
+
+        String getRes = "SELECT cabin_id FROM reservations WHERE reservation_id = ?";
+        String findCabin = "SELECT cabin_id FROM cabins WHERE category = ? AND is_available = 1 LIMIT 1";
+        String updateRes = "UPDATE reservations SET cabin_id = ? WHERE reservation_id = ?";
+        String freeOldCabin = "UPDATE cabins SET is_available = 1 WHERE cabin_id = ?";
+        String occupyNewCabin = "UPDATE cabins SET is_available = 0 WHERE cabin_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+
+            conn.setAutoCommit(false);
+
+            String oldCabinId = null;
+            String newCabinId = null;
+
+            // 1. Get current cabin
+            try (PreparedStatement ps = conn.prepareStatement(getRes)) {
+                ps.setString(1, reservationId);
+                ResultSet rs = ps.executeQuery();
+
+                if (!rs.next()) {
+                    System.out.println("❌ Reservation not found.");
+                    return;
+                }
+
+                oldCabinId = rs.getString("cabin_id");
+            }
+
+            // 2. Find new cabin
+            try (PreparedStatement ps = conn.prepareStatement(findCabin)) {
+                ps.setString(1, newCategory);
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    newCabinId = rs.getString("cabin_id");
+                } else {
+                    System.out.println("❌ No available cabin in that category.");
+                    conn.rollback();
+                    return;
+                }
+            }
+
+            // 3. Update reservation cabin
+            try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
+                ps.setString(1, newCabinId);
+                ps.setString(2, reservationId);
+                ps.executeUpdate();
+            }
+
+            // 4. Free old cabin
+            if (oldCabinId != null) {
+                try (PreparedStatement ps = conn.prepareStatement(freeOldCabin)) {
+                    ps.setString(1, oldCabinId);
+                    ps.executeUpdate();
+                }
+            }
+
+            // 5. Occupy new cabin
+            try (PreparedStatement ps = conn.prepareStatement(occupyNewCabin)) {
+                ps.setString(1, newCabinId);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+
+            System.out.println("✅ Reservation moved successfully!");
+            System.out.println("New Cabin ID: " + newCabinId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }
