@@ -335,4 +335,63 @@ public class SystemRepository {
             e.printStackTrace();
         }
     }
+    public void processCheckOut(String reservationId) {
+
+        String getRes = "SELECT cabin_id, status FROM reservations WHERE reservation_id = ?";
+        String updateRes = "UPDATE reservations SET status = 'Checked-Out' WHERE reservation_id = ?";
+        String updateCabin = "UPDATE cabins SET is_available = 1 WHERE cabin_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+
+            conn.setAutoCommit(false);
+
+            String cabinId = null;
+
+            // 1. Check reservation
+            try (PreparedStatement ps = conn.prepareStatement(getRes)) {
+                ps.setString(1, reservationId);
+                ResultSet rs = ps.executeQuery();
+
+                if (!rs.next()) {
+                    System.out.println("❌ Reservation not found.");
+                    return;
+                }
+
+                String status = rs.getString("status");
+                cabinId = rs.getString("cabin_id");
+
+                if ("Checked-Out".equalsIgnoreCase(status)) {
+                    System.out.println("⚠️ Already checked out.");
+                    return;
+                }
+
+                if (!"Checked-In".equalsIgnoreCase(status)) {
+                    System.out.println("❌ Guest must be checked-in first.");
+                    return;
+                }
+            }
+
+            // 2. Update reservation
+            try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
+                ps.setString(1, reservationId);
+                ps.executeUpdate();
+            }
+
+            // 3. Free cabin
+            if (cabinId != null) {
+                try (PreparedStatement ps = conn.prepareStatement(updateCabin)) {
+                    ps.setString(1, cabinId);
+                    ps.executeUpdate();
+                }
+            }
+
+            conn.commit();
+
+            System.out.println("✅ Check-out successful!");
+            System.out.println("Cabin is now available again.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
