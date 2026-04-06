@@ -225,15 +225,52 @@ public class Main {
         sc.nextLine();
     }
     private static void moveReservation() {
-        System.out.println("\n=== MOVE RESERVATION ===");
+        System.out.println("\n=== MOVE / MODIFY RESERVATION ===");
 
         System.out.print("Enter Reservation ID: ");
         String reservationId = sc.nextLine();
 
-        System.out.print("Enter New Cabin Category (Standard/Deluxe/Suite): ");
-        String category = sc.nextLine();
+        System.out.println("\nWhat would you like to change?");
+        System.out.println("[1] Cabin Only");
+        System.out.println("[2] Dates Only");
+        System.out.println("[3] Both Cabin & Dates");
+        System.out.print("Select: ");
 
-        repo.moveReservation(reservationId, category);
+        String choice = sc.nextLine();
+
+        String category = null;
+        String checkIn = null;
+        String checkOut = null;
+
+        switch (choice) {
+            case "1" -> {
+                System.out.print("Enter New Cabin Category: ");
+                category = sc.nextLine();
+            }
+            case "2" -> {
+                System.out.print("Enter New Check-in Date: ");
+                checkIn = sc.nextLine();
+
+                System.out.print("Enter New Check-out Date: ");
+                checkOut = sc.nextLine();
+            }
+            case "3" -> {
+                System.out.print("Enter New Cabin Category: ");
+                category = sc.nextLine();
+
+                System.out.print("Enter New Check-in Date: ");
+                checkIn = sc.nextLine();
+
+                System.out.print("Enter New Check-out Date: ");
+                checkOut = sc.nextLine();
+            }
+            default -> {
+                System.out.println("Invalid option!");
+                return;
+            }
+        }
+
+        repo.moveReservation(reservationId, category, checkIn, checkOut);
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();

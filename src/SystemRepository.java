@@ -452,13 +452,12 @@ public class SystemRepository {
             e.printStackTrace();
         }
     }
-    public void moveReservation(String reservationId, String newCategory) {
+    public void moveReservation(String reservationId, String newCategory, String newCheckIn, String newCheckOut) {
 
         String getRes = "SELECT cabin_id FROM reservations WHERE reservation_id = ?";
         String findCabin = "SELECT cabin_id FROM cabins WHERE category = ? AND is_available = 1 LIMIT 1";
-        String updateRes = "UPDATE reservations SET cabin_id = ? WHERE reservation_id = ?";
-        String freeOldCabin = "UPDATE cabins SET is_available = 1 WHERE cabin_id = ?";
-        String occupyNewCabin = "UPDATE cabins SET is_available = 0 WHERE cabin_id = ?";
+        String updateCabin = "UPDATE cabins SET is_available = 1 WHERE cabin_id = ?";
+        String occupyCabin = "UPDATE cabins SET is_available = 0 WHERE cabin_id = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
 
@@ -467,7 +466,7 @@ public class SystemRepository {
             String oldCabinId = null;
             String newCabinId = null;
 
-            // 1. Get current cabin
+            // 1. Get current reservation
             try (PreparedStatement ps = conn.prepareStatement(getRes)) {
                 ps.setString(1, reservationId);
                 ResultSet rs = ps.executeQuery();
@@ -480,45 +479,73 @@ public class SystemRepository {
                 oldCabinId = rs.getString("cabin_id");
             }
 
-            // 2. Find new cabin
-            try (PreparedStatement ps = conn.prepareStatement(findCabin)) {
-                ps.setString(1, newCategory);
-                ResultSet rs = ps.executeQuery();
+            // 2. If cabin change requested
+            if (newCategory != null) {
+                try (PreparedStatement ps = conn.prepareStatement(findCabin)) {
+                    ps.setString(1, newCategory);
+                    ResultSet rs = ps.executeQuery();
 
-                if (rs.next()) {
-                    newCabinId = rs.getString("cabin_id");
-                } else {
-                    System.out.println("❌ No available cabin in that category.");
-                    conn.rollback();
-                    return;
+                    if (rs.next()) {
+                        newCabinId = rs.getString("cabin_id");
+                    } else {
+                        System.out.println("❌ No available cabin.");
+                        conn.rollback();
+                        return;
+                    }
                 }
-            }
 
-            // 3. Update reservation cabin
-            try (PreparedStatement ps = conn.prepareStatement(updateRes)) {
-                ps.setString(1, newCabinId);
-                ps.setString(2, reservationId);
-                ps.executeUpdate();
-            }
+                // free old cabin
+                if (oldCabinId != null) {
+                    try (PreparedStatement ps = conn.prepareStatement(updateCabin)) {
+                        ps.setString(1, oldCabinId);
+                        ps.executeUpdate();
+                    }
+                }
 
-            // 4. Free old cabin
-            if (oldCabinId != null) {
-                try (PreparedStatement ps = conn.prepareStatement(freeOldCabin)) {
-                    ps.setString(1, oldCabinId);
+                // occupy new cabin
+                try (PreparedStatement ps = conn.prepareStatement(occupyCabin)) {
+                    ps.setString(1, newCabinId);
                     ps.executeUpdate();
                 }
             }
 
-            // 5. Occupy new cabin
-            try (PreparedStatement ps = conn.prepareStatement(occupyNewCabin)) {
-                ps.setString(1, newCabinId);
+            // 3. Build dynamic update
+            StringBuilder sql = new StringBuilder("UPDATE reservations SET ");
+            boolean first = true;
+
+            if (newCabinId != null) {
+                sql.append("cabin_id = ?");
+                first = false;
+            }
+
+            if (newCheckIn != null && newCheckOut != null) {
+                if (!first) sql.append(", ");
+                sql.append("check_in_date = ?, check_out_date = ?");
+            }
+
+            sql.append(" WHERE reservation_id = ?");
+
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+                int index = 1;
+
+                if (newCabinId != null) {
+                    ps.setString(index++, newCabinId);
+                }
+
+                if (newCheckIn != null && newCheckOut != null) {
+                    ps.setString(index++, newCheckIn);
+                    ps.setString(index++, newCheckOut);
+                }
+
+                ps.setString(index, reservationId);
+
                 ps.executeUpdate();
             }
 
             conn.commit();
 
-            System.out.println("✅ Reservation moved successfully!");
-            System.out.println("New Cabin ID: " + newCabinId);
+            System.out.println("✅ Reservation updated successfully!");
 
         } catch (Exception e) {
             e.printStackTrace();
