@@ -12,7 +12,7 @@ public class Main {
             switch (choice) {
                 case "1" -> createReservation();
                 case "2" -> manageGuestProfile();
-                case "3" -> System.out.println("Assign Cabin - Feature coming soon!");
+                case "3" -> assignCabin();
                 case "4" -> System.out.println("Search Reservation - Feature coming soon!");
                 case "5" -> System.out.println("Process Check-In - Feature coming soon!");
                 case "6" -> System.out.println("Process Check-Out - Feature coming soon!");
@@ -149,6 +149,21 @@ public class Main {
             }
             default -> System.out.println("Invalid option!");
         }
+
+        System.out.println("\nPress Enter to continue...");
+        sc.nextLine();
+    }
+
+    private static void assignCabin() {
+        System.out.println("\n=== ASSIGN CABIN ===");
+
+        System.out.print("Enter Reservation ID: ");
+        String reservationId = sc.nextLine();
+
+        System.out.print("Enter Cabin Category (Standard/Deluxe/Suite): ");
+        String category = sc.nextLine();
+
+        repo.assignCabin(reservationId, category);
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();
