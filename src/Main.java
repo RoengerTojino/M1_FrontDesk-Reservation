@@ -13,7 +13,7 @@ public class Main {
                 case "1" -> createReservation();
                 case "2" -> manageGuestProfile();
                 case "3" -> assignCabin();
-                case "4" -> System.out.println("Search Reservation - Feature coming soon!");
+                case "4" -> searchReservation();
                 case "5" -> System.out.println("Process Check-In - Feature coming soon!");
                 case "6" -> System.out.println("Process Check-Out - Feature coming soon!");
                 case "7" -> System.out.println("Cancel Reservation - Feature coming soon!");
@@ -164,6 +164,29 @@ public class Main {
         String category = sc.nextLine();
 
         repo.assignCabin(reservationId, category);
+
+        System.out.println("\nPress Enter to continue...");
+        sc.nextLine();
+    }
+    private static void searchReservation() {
+        System.out.println("\n=== SEARCH RESERVATION ===");
+        System.out.println("[1] By Reservation ID");
+        System.out.println("[2] By Guest ID");
+        System.out.print("Select: ");
+
+        String choice = sc.nextLine();
+
+        switch (choice) {
+            case "1" -> {
+                System.out.print("Enter Reservation ID: ");
+                repo.searchReservationById(sc.nextLine());
+            }
+            case "2" -> {
+                System.out.print("Enter Guest ID: ");
+                repo.searchReservationByGuest(sc.nextLine());
+            }
+            default -> System.out.println("Invalid option!");
+        }
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();
