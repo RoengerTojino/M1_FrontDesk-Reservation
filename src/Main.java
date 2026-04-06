@@ -14,7 +14,7 @@ public class Main {
                 case "2" -> manageGuestProfile();
                 case "3" -> assignCabin();
                 case "4" -> searchReservation();
-                case "5" -> System.out.println("Process Check-In - Feature coming soon!");
+                case "5" -> processCheckIn();
                 case "6" -> System.out.println("Process Check-Out - Feature coming soon!");
                 case "7" -> System.out.println("Cancel Reservation - Feature coming soon!");
                 case "8" -> System.out.println("Move Reservation - Feature coming soon!");
@@ -187,6 +187,17 @@ public class Main {
             }
             default -> System.out.println("Invalid option!");
         }
+
+        System.out.println("\nPress Enter to continue...");
+        sc.nextLine();
+    }
+    private static void processCheckIn() {
+        System.out.println("\n=== PROCESS CHECK-IN ===");
+
+        System.out.print("Enter Reservation ID: ");
+        String reservationId = sc.nextLine();
+
+        repo.processCheckIn(reservationId);
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();

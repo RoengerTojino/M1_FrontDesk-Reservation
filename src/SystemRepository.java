@@ -296,4 +296,43 @@ public class SystemRepository {
         System.out.println("Check-out: " + rs.getString("check_out_date"));
         System.out.println("Status: " + rs.getString("status"));
     }
+    public void processCheckIn(String reservationId) {
+
+        String checkSql = "SELECT * FROM reservations WHERE reservation_id = ?";
+        String updateSql = "UPDATE reservations SET status = 'Checked-In' WHERE reservation_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
+
+            checkPs.setString(1, reservationId);
+            ResultSet rs = checkPs.executeQuery();
+
+            if (!rs.next()) {
+                System.out.println("❌ Reservation not found.");
+                return;
+            }
+
+            String status = rs.getString("status");
+
+            if ("Checked-In".equalsIgnoreCase(status)) {
+                System.out.println("⚠️ Guest already checked in.");
+                return;
+            }
+
+            if ("Cancelled".equalsIgnoreCase(status)) {
+                System.out.println("❌ Cannot check-in a cancelled reservation.");
+                return;
+            }
+
+            try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
+                updatePs.setString(1, reservationId);
+                updatePs.executeUpdate();
+            }
+
+            System.out.println("✅ Check-in successful!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
