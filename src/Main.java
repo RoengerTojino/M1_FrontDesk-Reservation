@@ -44,16 +44,45 @@ public class Main {
     }
 
     private static void createReservation() {
+
         System.out.println("\n=== CREATE RESERVATION ===");
 
-        System.out.print("Guest First Name: ");
-        String firstName = sc.nextLine();
+        System.out.println("\nGuest Option:");
+        System.out.println("[1] Use Existing Guest");
+        System.out.println("[2] Create New Guest");
+        System.out.print("Select: ");
 
-        System.out.print("Guest Last Name: ");
-        String lastName = sc.nextLine();
+        String choice = sc.nextLine();
+        String guestId = null;
+        Guest guest = null;
 
-        String guestId = "G" + System.currentTimeMillis();
-        Guest guest = new Guest(guestId, firstName, lastName);
+        if (choice.equals("1")) {
+            System.out.print("Enter Guest ID: ");
+            guestId = sc.nextLine();
+
+            if (!repo.guestExists(guestId)) {
+                System.out.println("❌ Guest not found.");
+                return;
+            }
+
+            guest = repo.getGuestById(guestId); // you need this method
+
+        } else if (choice.equals("2")) {
+            System.out.print("Guest First Name: ");
+            String firstName = sc.nextLine();
+
+            System.out.print("Guest Last Name: ");
+            String lastName = sc.nextLine();
+
+            guestId = "G" + System.currentTimeMillis();
+            guest = new Guest(guestId, firstName, lastName);
+
+            repo.addGuest(guest);
+
+        } else {
+            System.out.println("❌ Invalid option.");
+            return;
+        }
 
         System.out.print("Cabin Category (Standard/Deluxe/Suite): ");
         String category = sc.nextLine();
@@ -64,19 +93,21 @@ public class Main {
             System.out.print("Number of Guests: ");
             try {
                 pax = Integer.parseInt(sc.nextLine());
+
                 if (pax <= 0) {
                     System.out.println("❌ Pax must be greater than 0.");
                     continue;
                 }
 
-                // Fetch cabin max_pax from DB
                 int maxPax = repo.getMaxPaxForCategory(category);
+
                 if (pax > maxPax) {
                     System.out.println("❌ Exceeds maximum allowed pax for this cabin (" + maxPax + ").");
                     continue;
                 }
 
                 break;
+
             } catch (Exception e) {
                 System.out.println("❌ Invalid number.");
             }

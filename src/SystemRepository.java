@@ -585,5 +585,44 @@ public class SystemRepository {
 
         return null;
     }
+    public Guest getGuestById(String guestId) {
+        String sql = "SELECT * FROM guests WHERE guest_id = ?";
 
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, guestId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Guest(
+                        rs.getString("guest_id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name")
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+    public boolean guestExists(String guestId) {
+        String sql = "SELECT * FROM guests WHERE guest_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, guestId);
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next(); // true if exists
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }
