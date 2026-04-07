@@ -190,11 +190,15 @@ public class SystemRepository {
             // 1. Check reservation exists
             String checkRes = "SELECT * FROM reservations WHERE reservation_id = ?";
             String cabinId = null;
-
+            String status = getReservationStatus(conn, reservationId);
             try (PreparedStatement ps = conn.prepareStatement(checkRes)) {
                 ps.setString(1, reservationId);
                 ResultSet rs = ps.executeQuery();
 
+                if (status.equalsIgnoreCase("Checked-Out")) {
+                    System.out.println("❌ Cannot assign cabin to completed reservation.");
+                    return;
+                }
                 if (!rs.next()) {
                     System.out.println("❌ Reservation not found.");
                     return;
@@ -303,7 +307,7 @@ public class SystemRepository {
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
-
+            String sstatus = getReservationStatus(conn, reservationId);
             checkPs.setString(1, reservationId);
             ResultSet rs = checkPs.executeQuery();
 
@@ -319,6 +323,10 @@ public class SystemRepository {
                 return;
             }
 
+            if (sstatus.equalsIgnoreCase("Checked-Out")) {
+                System.out.println("❌ Already checked-out.");
+                return;
+            }
             if ("Cancelled".equalsIgnoreCase(status)) {
                 System.out.println("❌ Cannot check-in a cancelled reservation.");
                 return;
@@ -463,6 +471,18 @@ public class SystemRepository {
 
             conn.setAutoCommit(false);
 
+            String status = getReservationStatus(conn, reservationId);
+
+            if (status == null) {
+                System.out.println("❌ Reservation not found.");
+                return;
+            }
+
+            if (status.equalsIgnoreCase("Checked-Out")) {
+                System.out.println("❌ Cannot modify a checked-out reservation.");
+                return;
+            }
+
             String oldCabinId = null;
             String newCabinId = null;
 
@@ -551,6 +571,19 @@ public class SystemRepository {
             e.printStackTrace();
         }
     }
+    private String getReservationStatus(Connection conn, String reservationId) throws SQLException {
+        String sql = "SELECT status FROM reservations WHERE reservation_id = ?";
 
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reservationId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("status");
+            }
+        }
+
+        return null;
+    }
 
 }
