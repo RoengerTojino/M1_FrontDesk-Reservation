@@ -26,7 +26,6 @@ public class Main {
         }
     }
 
-    // ================= MAIN MENU =================
     private static void showMainMenu() {
         System.out.println("\n=======================================");
         System.out.println(" Luxury Cruise Ship System");
@@ -35,7 +34,6 @@ public class Main {
         System.out.println("[2] Exit");
     }
 
-    // ================= FRONT DESK MENU =================
     private static void frontDeskMenu() {
         while (true) {
             System.out.println("\n=======================================");
@@ -59,7 +57,6 @@ public class Main {
         }
     }
 
-    // ================= CREATE RESERVATION =================
     private static void createReservation() {
         System.out.println("\n=== CREATE RESERVATION ===");
 
@@ -132,7 +129,6 @@ public class Main {
         repo.createReservation(guestId, cabinId, pax, sailingId);
     }
 
-    // ================= MANAGE RESERVATION =================
     private static void manageReservation() {
         while (true) {
 
@@ -206,7 +202,6 @@ public class Main {
         }
     }
 
-    // ================= MANAGE GUESTS =================
     private static void manageGuests() {
 
         while (true) {
@@ -253,6 +248,7 @@ public class Main {
             sc.nextLine();
         }
     }
+
     private static String[] getValidDates() {
         String checkIn, checkOut;
 
@@ -278,6 +274,7 @@ public class Main {
             }
         }
     }
+
     private static void moveReservation(String reservationId) {
         System.out.println("\n=== MOVE RESERVATION ===");
 

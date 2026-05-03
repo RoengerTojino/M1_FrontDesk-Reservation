@@ -6,9 +6,6 @@ public class SystemRepository {
 
     private static final String DB_URL = "jdbc:sqlite:Cruise_System.db";
 
-    // =========================
-    // CREATE RESERVATION
-    // =========================
     public void createReservation(int guestId, String cabinId, int pax, int sailingId) {
 
         if (pax <= 0) {
@@ -85,9 +82,6 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-    // =========================
-    // CHECK-IN
-    // =========================
     public void checkIn(String reservationId) {
         String sql = "SELECT status FROM reservations WHERE reservation_id = ?";
 
@@ -127,9 +121,6 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-    // =========================
-    // CHECK-OUT
-    // =========================
     public void checkOut(String reservationId) {
         String getRes = "SELECT cabin_id, status FROM reservations WHERE reservation_id = ?";
 
@@ -178,9 +169,6 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-    // =========================
-    // CANCEL
-    // =========================
     public void cancelReservation(String reservationId) {
         String getRes = "SELECT cabin_id, status FROM reservations WHERE reservation_id = ?";
 
@@ -229,9 +217,6 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-    // =========================
-    // MOVE / MODIFY
-    // =========================
     public void moveReservation(String reservationId, String cabinId, int sailingId) {
         String sql = """
     UPDATE reservations
@@ -255,10 +240,6 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-
-    // =========================
-    // SHOW TABLES
-    // =========================
     public void showAllReservations(String viewChoice) {
         String sql;
 
@@ -329,9 +310,6 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-    // =========================
-    // HELPERS
-    // =========================
     private String getReservationStatus(Connection conn, String reservationId) throws SQLException {
         String sql = "SELECT status FROM reservations WHERE reservation_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -352,6 +330,7 @@ VALUES (?, ?, ?, ?, ?)
             return false;
         }
     }
+
     public String getReservationStatus(String reservationId) {
         String sql = "SELECT status FROM reservations WHERE reservation_id = ?";
 
@@ -371,6 +350,7 @@ VALUES (?, ?, ?, ?, ?)
 
         return null;
     }
+
     public int addGuest(Guest guest) {
         String sql = "INSERT INTO guests (first_name, last_name) VALUES (?, ?)";
 
@@ -391,6 +371,7 @@ VALUES (?, ?, ?, ?, ?)
         }
         return 0;
     }
+
     public boolean isCabinExists(String cabinId) {
         String sql = "SELECT * FROM cabins WHERE cabin_id = ?";
 
@@ -408,6 +389,7 @@ VALUES (?, ?, ?, ?, ?)
 
         return false;
     }
+
     public int getCabinMaxPax(String cabinId) {
         String sql = "SELECT max_pax FROM cabins WHERE cabin_id = ?";
 
@@ -427,6 +409,7 @@ VALUES (?, ?, ?, ?, ?)
 
         return 0;
     }
+
     public void showAvailableCabins(String checkIn, String checkOut) {
         String sql = """
         SELECT c.cabin_id, c.category
@@ -461,6 +444,7 @@ VALUES (?, ?, ?, ?, ?)
             e.printStackTrace();
         }
     }
+
     public boolean isCabinAvailable(String cabinId, String checkIn, String checkOut) {
         String sql = """
         SELECT 1 FROM cabins c
@@ -489,6 +473,7 @@ VALUES (?, ?, ?, ?, ?)
         }
         return false;
     }
+
     public int getMaxPax(String cabinId) {
         String sql = "SELECT max_pax FROM cabins WHERE cabin_id = ?";
 
@@ -507,6 +492,7 @@ VALUES (?, ?, ?, ?, ?)
         }
         return 0;
     }
+
     public String[] getReservationDates(String reservationId) {
         String sql = "SELECT check_in_date, check_out_date FROM reservations WHERE reservation_id = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
@@ -527,6 +513,7 @@ VALUES (?, ?, ?, ?, ?)
         }
         return null;
     }
+
     public void showAllGuests() {
         String sql = "SELECT guest_id, first_name, last_name FROM guests";
 
@@ -551,6 +538,7 @@ VALUES (?, ?, ?, ?, ?)
             e.printStackTrace();
         }
     }
+
     public void showAllSailings() {
         String sql = "SELECT sailing_id, destination, embarkation_date, disembarkation_date FROM sailings";
 
@@ -577,6 +565,7 @@ VALUES (?, ?, ?, ?, ?)
             e.printStackTrace();
         }
     }
+
     public void showAvailableCabinsBySailing(int sailingId) {
         String sql = """
         SELECT c.cabin_id, c.category
@@ -605,6 +594,7 @@ VALUES (?, ?, ?, ?, ?)
             e.printStackTrace();
         }
     }
+
     public boolean isSailingExists(int sailingId) {
         String sql = "SELECT 1 FROM sailings WHERE sailing_id = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
@@ -617,6 +607,7 @@ VALUES (?, ?, ?, ?, ?)
             return false;
         }
     }
+
     public boolean isCabinAvailableForSailing(String cabinId, int sailingId) {
         String sql = """
         SELECT 1 FROM cabins c
