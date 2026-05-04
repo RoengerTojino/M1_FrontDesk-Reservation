@@ -6,14 +6,14 @@ public abstract class PaymentFramework {
     protected double discountedAmount;
     protected double vatAmount;
     protected double totalPayable;
-    protected boolean success;
+    protected boolean isSuccess;
 
     public PaymentFramework(double amount, double discountRate) {
         this.amount = amount;
         this.discountRate = discountRate;
     }
 
-    abstract boolean validatePayment();
+    abstract boolean isValidDatePayment();
 
     protected void computeAmounts() {
         discountedAmount = amount - (amount * discountRate);
@@ -22,18 +22,18 @@ public abstract class PaymentFramework {
     }
 
     public void processInvoice() {
-        if (!validatePayment()) {
-            success = false;
+        if (!isValidDatePayment()) {
+            isSuccess = false;
             return;
         }
         computeAmounts();
         finalizeTransaction();
-        success = true;
+        isSuccess = true;
     }
 
     protected void finalizeTransaction() {}
 
-    public boolean isSuccessful() { return success; }
+    public boolean isSuccessful() { return isSuccess; }
     public double getTotalPayable() { return totalPayable; }
     public double getDiscountedAmount() { return discountedAmount; }
     public double getVatAmount() { return vatAmount; }
