@@ -6,7 +6,9 @@ public class EWalletPayment extends PaymentFramework {
         this.walletId = walletId;
     }
 
+    @Override
     boolean validatePayment() {
-        return walletId != null && !walletId.isEmpty();
+        return walletId != null
+                && walletId.matches("\\d{11}");
     }
 }

@@ -1,8 +1,14 @@
 public class CashPayment extends PaymentFramework {
-    public CashPayment(double amount, double discountRate) {
+    private double cashGiven;
+
+    public CashPayment(double amount, double discountRate, double cashGiven) {
         super(amount, discountRate);
+        this.cashGiven = cashGiven;
     }
+
+    @Override
     boolean validatePayment() {
-        return amount > 0;
+        computeAmounts(); // ensure totalPayable is computed
+        return cashGiven >= totalPayable;
     }
 }
