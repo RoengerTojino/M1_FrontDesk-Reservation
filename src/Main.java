@@ -39,21 +39,21 @@ public class Main {
             System.out.println("\n=======================================");
             System.out.println(" Front Desk Menu");
             System.out.println("=======================================");
-            System.out.println("[1] Create Reservation");
-            System.out.println("[2] Manage Reservation");
-            System.out.println("[3] Manage Guests");
-            System.out.println("[4] Back");
-
+            System.out.println("[1] View Pricing"); // ✅ NEW
+            System.out.println("[2] Create Reservation");
+            System.out.println("[3] Manage Reservation");
+            System.out.println("[4] Manage Guests");
+            System.out.println("[5] Back");
             System.out.print("Select: ");
+
             String choice = sc.nextLine();
 
             switch (choice) {
-                case "1" -> createReservation();
-                case "2" -> manageReservation();
-                case "3" -> manageGuests();
-                case "4" -> {
-                    return;
-                }
+                case "1" -> showPricing(); // ✅ NEW
+                case "2" -> createReservation();
+                case "3" -> manageReservation();
+                case "4" -> manageGuests();
+                case "5" -> { return; }
                 default -> System.out.println("Invalid choice.");
             }
         }
@@ -62,58 +62,12 @@ public class Main {
     private static void createReservation() {
         System.out.println("\n=== CREATE RESERVATION ===");
 
-        // 1. Guest
-        System.out.print("Guest First Name: ");
-        String first = sc.nextLine();
-        System.out.print("Guest Last Name: ");
-        String last = sc.nextLine();
-        Guest guest = new Guest(null, first, last);
+        Guest guest = getGuest();
         int guestId = repo.addGuest(guest);
+        int sailingId = selectSailing();
+        String cabinId = selectCabin(sailingId);
+        int pax = getPax(cabinId);
 
-        // 2. Sailing
-        repo.showAllSailings();
-        int sailingId;
-        while (true) {
-            try {
-                System.out.print("Enter Sailing ID: ");
-                sailingId = Integer.parseInt(sc.nextLine());
-                if (repo.isSailingExists(sailingId)) break;
-                System.out.println("❌ Invalid sailing.");
-            } catch (Exception e) {
-                System.out.println("❌ Invalid input.");
-            }
-        }
-
-        // 3. Cabin
-        repo.showAvailableCabinsBySailing(sailingId);
-        String cabinId;
-        while (true) {
-            System.out.print("Enter Cabin ID: ");
-            cabinId = sc.nextLine().toUpperCase();
-            if (repo.isCabinAvailableForSailing(cabinId, sailingId)) break;
-            System.out.println("❌ Cabin not available.");
-        }
-
-        // 4. Pax
-        int pax;
-        while (true) {
-            try {
-                System.out.print("Number of Guests: ");
-                pax = Integer.parseInt(sc.nextLine());
-                if (pax <= 0) continue;
-
-                int maxPax = repo.getMaxPax(cabinId);
-                if (pax > maxPax) {
-                    System.out.println("❌ Too many guests! Max: " + maxPax);
-                    continue;
-                }
-                break;
-            } catch (Exception e) {
-                System.out.println("❌ Invalid number");
-            }
-        }
-
-        // DATA
         String cabinType = repo.getCabinType(cabinId);
         String destination = repo.getDestinationBySailing(sailingId);
 
@@ -123,224 +77,16 @@ public class Main {
             default -> 12000;
         };
 
-        double destinationFee = switch (destination) {
-            case "Alaska" -> 8000;
-            case "Mediterranean" -> 12000;
-            case "Caribbean" -> 10000;
-            case "Greek Isles" -> 13000;
-            case "Norwegian Fjords" -> 15000;
-            case "Japan" -> 11000;
-            case "Australia" -> 18000;
-            case "Bali" -> 9000;
-            case "Hawaii" -> 16000;
-            default -> 10000;
-        };
+        double destinationFee = getDestinationFee(destination);
 
-        double subtotal = cabinPrice * pax;
-        double baseAmount = subtotal + destinationFee;
+        double baseAmount = (cabinPrice * pax) + destinationFee;
 
-        // COUPON
-        double discountRate = 0.0;
+        double discountRate = applyCoupon();
 
-        while (true) {
-            System.out.print("\nDo you have a coupon? (Y/N): ");
-            String ans = sc.nextLine().trim();
-
-            if (ans.equalsIgnoreCase("N")) {
-                break;
-
-            } else if (ans.equalsIgnoreCase("Y")) {
-
-                System.out.print("Enter coupon code: ");
-                String code = sc.nextLine().trim().toUpperCase();
-
-                switch (code) {
-                    case "DISC10" -> discountRate = 0.10;
-                    case "DISC20" -> discountRate = 0.20;
-                    case "VIP50" -> discountRate = 0.50;
-                    default -> {
-                        System.out.println("❌ Invalid coupon.");
-                        continue; // 🔥 goes back to Y/N question
-                    }
-                }
-
-                System.out.println("✅ Discount applied!");
-                break;
-
-            } else {
-                System.out.println("❌ Invalid input. Please enter Y or N.");
-            }
-        }
-
-        // PREVIEW (ESTIMATE ONLY)
-        double previewDiscount = baseAmount * discountRate;
-        double previewDiscounted = baseAmount - previewDiscount;
-        double previewVat = previewDiscounted * 0.12;
-        double previewTotal = previewDiscounted + previewVat;
-
-        System.out.println("\n=== PAYMENT PREVIEW ===");
-        System.out.println("Estimated Total: ₱" + previewTotal);
-
-        // CONFIRM
-        while (true) {
-            System.out.print("\nProceed to payment? (Y/N): ");
-            String confirm = sc.nextLine().trim();
-
-            if (confirm.equalsIgnoreCase("Y")) {
-                break;
-            }
-            else if (confirm.equalsIgnoreCase("N")) {
-                System.out.println("❌ Reservation cancelled.");
-                return;
-            }
-            else {
-                System.out.println("❌ Invalid input. Please enter Y or N.");
-            }
-        }
-
-        // PAYMENT
-        String choice;
-        while (true) {
-            System.out.println("\n=== PAYMENT ===");
-            System.out.println("[1] Cash");
-            System.out.println("[2] Card");
-            System.out.println("[3] E-Wallet");
-            System.out.print("Select: ");
-            choice = sc.nextLine();
-
-            if (choice.equals("1") || choice.equals("2") || choice.equals("3")) break;
-            System.out.println("❌ Invalid choice. Try again.");
-        }
-
-        PaymentFramework payment = null;
-        String card = "";
-        String wallet = "";
-
-// CARD INPUT (FIXED)
-        if (choice.equals("2")) {
-            while (true) {
-                System.out.print("Enter Card Number (16 digits): ");
-                card = sc.nextLine();
-
-                if (!card.matches("\\d+")) {
-                    System.out.println("❌ Card must contain numbers only.");
-                    continue;
-                }
-
-                if (card.length() != 16) {
-                    System.out.println("❌ Card must be exactly 16 digits.");
-                    continue;
-                }
-
-                System.out.println("✅ Card accepted.");
-                break;
-            }
-        }
-
-// E-WALLET INPUT (FIXED)
-        if (choice.equals("3")) {
-            while (true) {
-                System.out.print("Enter Wallet Number (11 digits): ");
-                wallet = sc.nextLine();
-
-                if (!wallet.matches("\\d+")) {
-                    System.out.println("❌ Must be numbers only.");
-                    continue;
-                }
-
-                if (wallet.length() != 11) {
-                    System.out.println("❌ Must be exactly 11 digits.");
-                    continue;
-                }
-
-                System.out.println("✅ Wallet accepted.");
-                break;
-            }
-        }
-
-/// CASH INPUT (FIXED - use previewTotal)
-        double cashGiven = 0;
-        if (choice.equals("1")) {
-            while (true) {
-                try {
-                    System.out.print("Enter Amount: ");
-                    cashGiven = Double.parseDouble(sc.nextLine());
-
-                    if (cashGiven <= 0) {
-                        System.out.println("❌ Amount must be greater than 0.");
-                        continue;
-                    }
-
-                    // ✅ USE previewTotal (closest estimate BEFORE framework)
-                    if (cashGiven < previewTotal) {
-                        System.out.println("❌ Insufficient amount. Need at least ₱" + previewTotal);
-                        continue;
-                    }
-
-                    System.out.println("✅ Payment accepted.");
-                    break;
-
-                } catch (Exception e) {
-                    System.out.println("❌ Invalid amount.");
-                }
-            }
-        }
-
-// CREATE PAYMENT
-        switch (choice) {
-            case "1" -> payment = new CashPayment(baseAmount, discountRate);
-            case "2" -> payment = new CardPayment(baseAmount, discountRate, card);
-            case "3" -> payment = new EWalletPayment(baseAmount, discountRate, wallet);
-        }
-
-// PROCESS
-        payment.processInvoice();
-
-        if (!payment.isSuccessful()) {
-            System.out.println("❌ Payment Failed.");
-            return;
-        }
-
-        // ✅ GET VALUES FROM FRAMEWORK (CORRECT DESIGN)
-        double discountAmount = baseAmount - payment.getDiscountedAmount();
-        double vat = payment.getVatAmount();
-        double finalTotal = payment.getTotalPayable();
-
-        // RECEIPT (NOW CORRECT)
-        System.out.println("\n=== RESERVATION RECEIPT ===");
-        System.out.println("Guest        : " + first + " " + last);
-        System.out.println("Cabin        : " + cabinType + " (" + cabinId + ")");
-        System.out.println("Destination  : " + destination);
-        System.out.println("Guests       : " + pax);
-
-        System.out.println("\nSUBTOTAL     : ₱" + baseAmount);
-        System.out.println("Discount     : ₱" + discountAmount);
-        System.out.println("VAT          : ₱" + vat);
-        System.out.println("FINAL TOTAL  : ₱" + finalTotal);
-
-        // SAVE
-        int reservationId = repo.createReservation(guestId, cabinId, pax, sailingId);
-
-        String reference = "CR-" + String.format("%06d", reservationId);
-
-        repo.savePayment(
-                reservationId,
-                baseAmount,
-                discountAmount,
-                vat,
-                finalTotal,
-                reference
-        );
-
-        double change = cashGiven - finalTotal;
-
-        System.out.println("🎟 Reference No: " + reference);
-
-        if (choice.equals("1")) {
-            System.out.println("💵 Change: ₱" + change);
-        }
-
-        System.out.println("✅ Reservation + Payment Completed!");
+        handlePayment(baseAmount, discountRate,
+                guestId, cabinId, pax, sailingId,
+                cabinType, destination,
+                guest.getFirstName(), guest.getLastName());
     }
 
     private static void manageReservation() {
@@ -389,12 +135,12 @@ public class Main {
 
                 switch (action) {
                     case "1" -> repo.checkOut(reservationId);
-                    case "2" -> {
-                        continue;
-                    }
+                    case "2" -> { continue; }
                     default -> System.out.println("Invalid option.");
                 }
-            } else if (status.equalsIgnoreCase("Pending")) {
+            }
+
+            else if (status.equalsIgnoreCase("Pending")) {
                 System.out.println("\n[1] Check-In");
                 System.out.println("[2] Move Reservation");
                 System.out.println("[3] Cancel Reservation");
@@ -577,5 +323,251 @@ public class Main {
 
         System.out.println("\nPress Enter to continue...");
         sc.nextLine();
+    }//====================================================================================================
+
+    private static Guest getGuest() {
+        System.out.print("First Name: ");
+        String first = sc.nextLine();
+
+        System.out.print("Last Name: ");
+        String last = sc.nextLine();
+
+        return new Guest(null, first, last);
+    }
+
+    private static int selectSailing() {
+        repo.showAllSailings();
+        while (true) {
+            try {
+                System.out.print("Enter Sailing ID: ");
+                int id = Integer.parseInt(sc.nextLine());
+                if (repo.isSailingExists(id)) return id;
+                System.out.println("❌ Invalid sailing.");
+            } catch (Exception e) {
+                System.out.println("❌ Invalid input.");
+            }
+        }
+    }
+
+    private static String selectCabin(int sailingId) {
+        repo.showAvailableCabinsBySailing(sailingId);
+        while (true) {
+            System.out.print("Enter Cabin ID: ");
+            String cabinId = sc.nextLine().toUpperCase();
+            if (repo.isCabinAvailableForSailing(cabinId, sailingId)) return cabinId;
+            System.out.println("❌ Cabin not available.");
+        }
+    }
+
+    private static int getPax(String cabinId) {
+        while (true) {
+            try {
+                System.out.print("Number of Guests: ");
+                int pax = Integer.parseInt(sc.nextLine());
+                int max = repo.getMaxPax(cabinId);
+
+                if (pax > 0 && pax <= max) return pax;
+
+                System.out.println("❌ Max allowed: " + max);
+            } catch (Exception e) {
+                System.out.println("❌ Invalid number");
+            }
+        }
+    }
+
+    private static double applyCoupon() {
+        while (true) {
+            System.out.print("Coupon? (Y/N): ");
+            String ans = sc.nextLine();
+
+            if (ans.equalsIgnoreCase("N")) {
+                return 0.0;
+            }
+
+            if (ans.equalsIgnoreCase("Y")) {
+                System.out.print("Enter code: ");
+                String code = sc.nextLine().toUpperCase();
+
+                switch (code) {
+                    case "DISC10": return 0.10;
+                    case "DISC20": return 0.20;
+                    case "VIP50": return 0.50;
+                    default:
+                        System.out.println("❌ Invalid coupon.");
+                        // 🔥 goes back to Coupon? (Y/N)
+                }
+            } else {
+                System.out.println("❌ Please enter Y or N.");
+            }
+        }
+    }
+
+    private static void handlePayment(double baseAmount, double discountRate,
+                                      int guestId, String cabinId, int pax, int sailingId,
+                                      String cabinType, String destination,
+                                      String first, String last) {
+
+        // PREVIEW
+        double discounted = baseAmount - (baseAmount * discountRate);
+        double vat = discounted * 0.12;
+        double total = discounted + vat;
+
+        System.out.println("\n=== PAYMENT PREVIEW ===");
+        System.out.println("Estimated Total: ₱" + total);
+
+        // CONFIRM LOOP
+        while (true) {
+            System.out.print("Proceed? (Y/N): ");
+            String confirm = sc.nextLine();
+
+            if (confirm.equalsIgnoreCase("Y")) break;
+            if (confirm.equalsIgnoreCase("N")) return;
+
+            System.out.println("❌ Invalid input.");
+        }
+
+        // PAYMENT METHOD LOOP
+        String choice;
+        while (true) {
+            System.out.println("\n[1] Cash [2] Card [3] E-Wallet");
+            System.out.print("Select: ");
+            choice = sc.nextLine();
+
+            if (choice.equals("1") || choice.equals("2") || choice.equals("3")) break;
+            System.out.println("❌ Invalid choice.");
+        }
+
+        PaymentFramework payment = null;
+        String card = "", wallet = "";
+        double cash = 0;
+
+        // CARD LOOP
+        if (choice.equals("2")) {
+            while (true) {
+                System.out.print("Card (16 digits): ");
+                card = sc.nextLine();
+
+                if (!card.matches("\\d+")) {
+                    System.out.println("❌ Numbers only.");
+                    continue;
+                }
+                if (card.length() != 16) {
+                    System.out.println("❌ Must be 16 digits.");
+                    continue;
+                }
+                break;
+            }
+            payment = new CardPayment(baseAmount, discountRate, card);
+        }
+
+        // WALLET LOOP
+        if (choice.equals("3")) {
+            while (true) {
+                System.out.print("Wallet (11 digits): ");
+                wallet = sc.nextLine();
+
+                if (!wallet.matches("\\d+")) {
+                    System.out.println("❌ Numbers only.");
+                    continue;
+                }
+                if (wallet.length() != 11) {
+                    System.out.println("❌ Must be 11 digits.");
+                    continue;
+                }
+                break;
+            }
+            payment = new EWalletPayment(baseAmount, discountRate, wallet);
+        }
+
+        // CASH LOOP
+        if (choice.equals("1")) {
+            while (true) {
+                try {
+                    System.out.print("Cash: ");
+                    cash = Double.parseDouble(sc.nextLine());
+
+                    if (cash <= 0) {
+                        System.out.println("❌ Must be > 0.");
+                        continue;
+                    }
+                    if (cash < total) {
+                        System.out.println("❌ Insufficient. Need ₱" + total);
+                        continue;
+                    }
+                    break;
+
+                } catch (Exception e) {
+                    System.out.println("❌ Invalid amount.");
+                }
+            }
+            payment = new CashPayment(baseAmount, discountRate);
+        }
+
+        // PROCESS
+        payment.processInvoice();
+
+        if (!payment.isSuccessful()) {
+            System.out.println("❌ Payment failed");
+            return;
+        }
+
+        // RESULTS
+        double finalTotal = payment.getTotalPayable();
+        double discountAmt = baseAmount - payment.getDiscountedAmount();
+        double vatAmt = payment.getVatAmount();
+
+        // SAVE
+        int reservationId = repo.createReservation(guestId, cabinId, pax, sailingId);
+        String ref = "CR-" + String.format("%06d", reservationId);
+
+        repo.savePayment(reservationId, baseAmount, discountAmt, vatAmt, finalTotal, ref);
+
+        // ✅ CALL RECEIPT HERE
+        printReceipt(first, last, cabinType, cabinId, destination, pax,
+                baseAmount, discountAmt, vatAmt, finalTotal, ref);
+
+        // OUTPUT
+        System.out.println("\n🎟 Ref: " + ref);
+
+        if (choice.equals("1")) {
+            System.out.println("💵 Change: ₱" + (cash - finalTotal));
+        }
+
+        System.out.println("✅ Reservation + Payment Completed!");
+    }
+
+    private static double getDestinationFee(String destination) {
+        return switch (destination) {
+            case "Alaska" -> 8000;
+            case "Mediterranean" -> 12000;
+            case "Caribbean" -> 10000;
+            case "Greek Isles" -> 13000;
+            case "Norwegian Fjords" -> 15000;
+            case "Japan" -> 11000;
+            case "Australia" -> 18000;
+            case "Bali" -> 9000;
+            case "Hawaii" -> 16000;
+            default -> 10000;
+        };
+    }
+
+    private static void printReceipt(String first, String last, String cabinType,
+                                     String cabinId, String destination, int pax,
+                                     double baseAmount, double discountAmt,
+                                     double vatAmt, double finalTotal, String reference) {
+
+        System.out.println("\n=== RESERVATION RECEIPT ===");
+        System.out.println("Guest : " + first + " " + last);
+        System.out.println("Cabin : " + cabinType + " (" + cabinId + ")");
+        System.out.println("Destination : " + destination);
+        System.out.println("Guests : " + pax);
+
+        System.out.println("\nSUBTOTAL : ₱" + baseAmount);
+        System.out.println("Discount : ₱" + discountAmt);
+        System.out.println("VAT : ₱" + vatAmt);
+        System.out.println("FINAL TOTAL : ₱" + finalTotal);
+
+        System.out.println("\n🎟 Reference No: " + reference);
+        System.out.println("✅ PAYMENT CONFIRMED");
     }
 }
