@@ -633,4 +633,31 @@ VALUES (?, ?, ?, ?, ?)
         }
         return false;
     }
+    public void processRefund(String reservationId) {
+
+        double paidAmount = getTotalPaid(reservationId);
+
+        // ❌ No payment = no refund
+        if (paidAmount <= 0) {
+            System.out.println("❌ No payment found. Refund not possible.");
+            return;
+        }
+
+        // 🔥 You can change this logic (full / partial)
+        double refundAmount = paidAmount; // FULL REFUND
+
+        // ✅ Generate reference
+        String cleanId = reservationId.replace("RES-", "");
+        String refundRef = "RF-" + String.format("%06d", Integer.parseInt(cleanId));
+
+        // ✅ Save to DB
+        saveRefund(reservationId, refundAmount, refundRef);
+
+        // ✅ Display
+        System.out.println("\n=== REFUND RECEIPT ===");
+        System.out.println("Reservation ID : " + reservationId);
+        System.out.println("Refund Amount  : ₱" + refundAmount);
+        System.out.println("Refund Ref No  : " + refundRef);
+        System.out.println("Status         : REFUNDED");
+    }
 }
