@@ -5,20 +5,24 @@ import java.time.format.DateTimeParseException;
 public class SystemRepository {
 
     private static final String DB_URL = "jdbc:sqlite:Cruise_System.db";
+    private Connection connect() throws SQLException {
+        return DriverManager.getConnection(DB_URL);
+    }
+    public int createReservation(int guestId, String cabinId, int pax, int sailingId) {
 
-    public void createReservation(int guestId, String cabinId, int pax, int sailingId) {
+        int reservationId = 0; // 🔥 ADD THIS
 
         if (pax <= 0) {
             System.out.println("❌ Invalid pax count.");
-            return;
+            return 0;
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL)) {
             conn.setAutoCommit(false);
 
-            // ✅ 1. Check cabin availability for that sailing
+            // ================= CHECK CABIN =================
             String checkCabin = """
-            SELECT max_pax 
+            SELECT max_pax
             FROM cabins c
             WHERE c.cabin_id = ?
             AND NOT EXISTS (
@@ -40,24 +44,24 @@ public class SystemRepository {
                 if (!rs.next()) {
                     System.out.println("❌ Cabin not available for this sailing.");
                     conn.rollback();
-                    return;
+                    return 0;
                 }
 
                 maxPax = rs.getInt("max_pax");
             }
 
-            // ✅ 2. Validate pax
+            // ================= VALIDATE PAX =================
             if (pax > maxPax) {
                 System.out.println("❌ Too many guests! Max allowed: " + maxPax);
                 conn.rollback();
-                return;
+                return 0;
             }
 
-            // ✅ 3. Insert reservation (NO DATES anymore)
+            // ================= INSERT =================
             String insertReservation = """
-INSERT INTO reservations (guest_id, cabin_id, pax_count, sailing_id, status)
-VALUES (?, ?, ?, ?, ?)
-""";
+            INSERT INTO reservations (guest_id, cabin_id, pax_count, sailing_id, status)
+            VALUES (?, ?, ?, ?, ?)
+        """;
 
             try (PreparedStatement ps = conn.prepareStatement(insertReservation, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, guestId);
@@ -70,7 +74,7 @@ VALUES (?, ?, ?, ?, ?)
 
                 ResultSet keys = ps.getGeneratedKeys();
                 if (keys.next()) {
-                    int reservationId = keys.getInt(1);
+                    reservationId = keys.getInt(1); // 🔥 STORE IT
                     System.out.println("✅ Reservation Created! ID: RES-" + String.format("%03d", reservationId));
                 }
             }
@@ -80,10 +84,14 @@ VALUES (?, ?, ?, ?, ?)
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return reservationId; // 🔥 RETURN IT
     }
 
     public void checkIn(String reservationId) {
-        String sql = "SELECT status FROM reservations WHERE reservation_id = ?";
+        String cabinId = null; // ✅ ADD THIS
+
+        String sql = "SELECT cabin_id, status FROM reservations WHERE reservation_id = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -95,7 +103,7 @@ VALUES (?, ?, ?, ?, ?)
                 System.out.println("❌ Reservation not found.");
                 return;
             }
-
+            cabinId = rs.getString("cabin_id"); // ✅ ADD THIS
             String status = rs.getString("status");
 
             if (status.equalsIgnoreCase("Checked-In")) {
@@ -115,6 +123,15 @@ VALUES (?, ?, ?, ?, ?)
             }
 
             System.out.println("✅ Check-in successful!");
+
+            // 🔑 ISSUE KEYCARD
+            KeyCard card = new KeyCard(
+                    "KC-" + reservationId,
+                    reservationId,
+                    cabinId
+            );
+
+            System.out.println("🔑 KeyCard Issued: KC-" + reservationId);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -169,52 +186,34 @@ VALUES (?, ?, ?, ?, ?)
         }
     }
 
-    public void cancelReservation(String reservationId) {
-        String getRes = "SELECT cabin_id, status FROM reservations WHERE reservation_id = ?";
+    public void cancelReservationWithRefund(String reservationId) {
 
-        try (Connection conn = DriverManager.getConnection(DB_URL)) {
-            conn.setAutoCommit(false);
+        // get payment info
+        double paidAmount = getTotalPaid(reservationId);
 
-            String cabinId = null;
-
-            try (PreparedStatement ps = conn.prepareStatement(getRes)) {
-                ps.setString(1, reservationId);
-                ResultSet rs = ps.executeQuery();
-
-                if (!rs.next()) {
-                    System.out.println("❌ Reservation not found.");
-                    return;
-                }
-
-                String status = rs.getString("status");
-                cabinId = rs.getString("cabin_id");
-
-                if (status.equalsIgnoreCase("Cancelled") || status.equalsIgnoreCase("Checked-Out")) {
-                    System.out.println("❌ Cannot cancel.");
-                    return;
-                }
-            }
-
-            String update = "UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?";
-            try (PreparedStatement ps = conn.prepareStatement(update)) {
-                ps.setString(1, reservationId);
-                ps.executeUpdate();
-            }
-
-            if (cabinId != null) {
-                String freeCabin = "UPDATE cabins SET is_available = 1 WHERE cabin_id = ?";
-                try (PreparedStatement ps = conn.prepareStatement(freeCabin)) {
-                    ps.setString(1, cabinId);
-                    ps.executeUpdate();
-                }
-            }
-
-            conn.commit();
-            System.out.println("✅ Reservation cancelled!");
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (paidAmount <= 0) {
+            System.out.println("❌ No payment found. No refund.");
+            cancelReservation(reservationId);
+            return;
         }
+
+        // example: full refund (you can change logic)
+        double refundAmount = paidAmount;
+
+        // generate refund reference
+        String refundRef = "RF-" + String.format("%06d", Integer.parseInt(reservationId.replace("RES-", "")));
+
+        // update reservation
+        cancelReservation(reservationId);
+
+        // save refund
+        saveRefund(reservationId, refundAmount, refundRef);
+
+        // display
+        System.out.println("💸 REFUND PROCESSED");
+        System.out.println("Reservation : " + reservationId);
+        System.out.println("Refund Amt  : ₱" + refundAmount);
+        System.out.println("Refund Ref  : " + refundRef);
     }
 
     public void moveReservation(String reservationId, String cabinId, int sailingId) {
@@ -633,45 +632,223 @@ VALUES (?, ?, ?, ?, ?)
         }
         return false;
     }
-    public void processRefund(String reservationId) {
 
-        double paidAmount = getTotalPaid(reservationId);
-
-        // ❌ No payment = no refund
-        if (paidAmount <= 0) {
-            System.out.println("❌ No payment found. Refund not possible.");
-            return;
-        }
-
-        // 🔥 You can change this logic (full / partial)
-        double refundAmount = paidAmount; // FULL REFUND
-
-        // ✅ Generate reference
-        String cleanId = reservationId.replace("RES-", "");
-        String refundRef = "RF-" + String.format("%06d", Integer.parseInt(cleanId));
-
-        // ✅ Save to DB
-        saveRefund(reservationId, refundAmount, refundRef);
-
-        // ✅ Display
-        System.out.println("\n=== REFUND RECEIPT ===");
-        System.out.println("Reservation ID : " + reservationId);
-        System.out.println("Refund Amount  : ₱" + refundAmount);
-        System.out.println("Refund Ref No  : " + refundRef);
-        System.out.println("Status         : REFUNDED");
     public void savePayment(int reservationId, double amount,
                             double discount, double vat,
                             double total, String reference) {
+
         String sql = "INSERT INTO payments (reservation_id, amount, discount, vat, total, reference) VALUES (?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, reservationId);
             ps.setDouble(2, amount);
             ps.setDouble(3, discount);
             ps.setDouble(4, vat);
             ps.setDouble(5, total);
             ps.setString(6, reference);
+
             ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public String getCabinType(String cabinId) {
+        String sql = "SELECT category FROM cabins WHERE cabin_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, cabinId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) return rs.getString("category");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "STANDARD";
+    }
+    public String getDestinationBySailing(int sailingId) {
+        String sql = "SELECT destination FROM sailings WHERE sailing_id = ?";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, sailingId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) return rs.getString("destination");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Unknown";
+    }
+
+    public void saveRefund(String reservationId, double amount, String ref) {
+        String sql = "INSERT INTO refunds(reservation_id, amount, reference_no) VALUES(?,?,?)";
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, reservationId);
+            ps.setDouble(2, amount);
+            ps.setString(3, ref);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public double getTotalPaid(String reservationId) {
+        String sql = "SELECT total FROM payments WHERE reservation_id = ?";
+        double total = 0;
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            int id = Integer.parseInt(reservationId.replace("RES-", ""));
+            ps.setInt(1, id);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                total = rs.getDouble("total");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return total;
+    }
+
+    public void cancelReservation(String reservationId) {
+        String sql = "UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, reservationId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getDestinationByReservation(String reservationId) {
+        String sql = """
+        SELECT s.destination
+        FROM reservations r
+        JOIN sailings s ON r.sailing_id = s.sailing_id
+        WHERE r.reservation_id = ?
+    """;
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, reservationId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) return rs.getString("destination");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public String getCabinTypeByReservation(String reservationId) {
+        String sql = """
+        SELECT c.category
+        FROM reservations r
+        JOIN cabins c ON r.cabin_id = c.cabin_id
+        WHERE r.reservation_id = ?
+    """;
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, reservationId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) return rs.getString("category");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public boolean showAvailableCabinsByTypeAndSailing(int sailingId, String type) {
+        String sql = """
+        SELECT c.cabin_id, c.category
+        FROM cabins c
+        WHERE c.category = ?
+        AND NOT EXISTS (
+            SELECT 1 FROM reservations r
+            WHERE r.cabin_id = c.cabin_id
+            AND r.sailing_id = ?
+            AND r.status != 'Cancelled'
+        )
+    """;
+
+        boolean hasData = false;
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, type);
+            ps.setInt(2, sailingId);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                hasData = true;
+                System.out.println(rs.getString("cabin_id") + " | "
+                        + rs.getString("category") + " | Available");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return hasData;
+    }
+
+    public void showSailingsByDestination(String destination) {
+        String sql = """
+        SELECT sailing_id, destination, embarkation_date, disembarkation_date
+        FROM sailings
+        WHERE destination = ?
+    """;
+
+        try (Connection conn = connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, destination);
+            ResultSet rs = ps.executeQuery();
+
+            System.out.println("\n=== SAILINGS (" + destination + ") ===");
+            System.out.printf("%-5s %-20s %-15s %-15s%n",
+                    "ID", "Destination", "Embark", "Disembark");
+            System.out.println("----------------------------------------------------------");
+
+            while (rs.next()) {
+                System.out.printf("%-5d %-20s %-15s %-15s%n",
+                        rs.getInt("sailing_id"),
+                        rs.getString("destination"),
+                        rs.getString("embarkation_date"),
+                        rs.getString("disembarkation_date")
+                );
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
