@@ -51,7 +51,9 @@ public class Main {
                 case "1" -> createReservation();
                 case "2" -> manageReservation();
                 case "3" -> manageGuests();
-                case "4" -> { return; }
+                case "4" -> {
+                    return;
+                }
                 default -> System.out.println("Invalid choice.");
             }
         }
@@ -387,12 +389,12 @@ public class Main {
 
                 switch (action) {
                     case "1" -> repo.checkOut(reservationId);
-                    case "2" -> { continue; }
+                    case "2" -> {
+                        continue;
+                    }
                     default -> System.out.println("Invalid option.");
                 }
-            }
-
-            else if (status.equalsIgnoreCase("Pending")) {
+            } else if (status.equalsIgnoreCase("Pending")) {
                 System.out.println("\n[1] Check-In");
                 System.out.println("[2] Move Reservation");
                 System.out.println("[3] Cancel Reservation");

@@ -633,4 +633,47 @@ VALUES (?, ?, ?, ?, ?)
         }
         return false;
     }
+    public void processRefund(String reservationId) {
+
+        double paidAmount = getTotalPaid(reservationId);
+
+        // ❌ No payment = no refund
+        if (paidAmount <= 0) {
+            System.out.println("❌ No payment found. Refund not possible.");
+            return;
+        }
+
+        // 🔥 You can change this logic (full / partial)
+        double refundAmount = paidAmount; // FULL REFUND
+
+        // ✅ Generate reference
+        String cleanId = reservationId.replace("RES-", "");
+        String refundRef = "RF-" + String.format("%06d", Integer.parseInt(cleanId));
+
+        // ✅ Save to DB
+        saveRefund(reservationId, refundAmount, refundRef);
+
+        // ✅ Display
+        System.out.println("\n=== REFUND RECEIPT ===");
+        System.out.println("Reservation ID : " + reservationId);
+        System.out.println("Refund Amount  : ₱" + refundAmount);
+        System.out.println("Refund Ref No  : " + refundRef);
+        System.out.println("Status         : REFUNDED");
+    public void savePayment(int reservationId, double amount,
+                            double discount, double vat,
+                            double total, String reference) {
+        String sql = "INSERT INTO payments (reservation_id, amount, discount, vat, total, reference) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, reservationId);
+            ps.setDouble(2, amount);
+            ps.setDouble(3, discount);
+            ps.setDouble(4, vat);
+            ps.setDouble(5, total);
+            ps.setString(6, reference);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
