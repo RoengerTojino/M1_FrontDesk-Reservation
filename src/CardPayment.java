@@ -5,7 +5,8 @@ public class CardPayment extends PaymentFramework {
         super(amount, discountRate);
         this.cardNumber = cardNumber;
     }
-    @Override
-    boolean validatePayment() { return cardNumber != null && cardNumber.matches("\\d{16}");
+
+    boolean validatePayment() {
+        return cardNumber != null && cardNumber.length() == 16;
     }
 }
