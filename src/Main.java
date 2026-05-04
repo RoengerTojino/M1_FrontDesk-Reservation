@@ -126,7 +126,7 @@ public class Main {
         PaymentFramework payment = null;
 
         switch (choice) {
-            case "1" -> payment = new CashPayment(baseAmount, discountRate);
+            case "1" -> payment = new CashPayment(baseAmount, discountRate, cashGiven);
             case "2" -> payment = new CardPayment(baseAmount, discountRate, card);
             case "3" -> payment = new EWalletPayment(baseAmount, discountRate, wallet);
         }
