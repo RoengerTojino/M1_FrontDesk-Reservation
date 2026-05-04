@@ -336,30 +336,4 @@ public class Main {
 
         repo.moveReservation(reservationId, cabinId, sailingId);
     }
-
-    private static double applyCoupon() {
-        while (true) {
-            System.out.print("\nDo you have a coupon? (Y/N): ");
-            String ans = sc.nextLine().trim();
-
-            if (ans.equalsIgnoreCase("N")) return 0.0;
-
-            if (ans.equalsIgnoreCase("Y")) {
-                System.out.print("Enter coupon code: ");
-                String code = sc.nextLine().trim().toUpperCase();
-
-                return switch (code) {
-                    case "DISC10" -> 0.10;
-                    case "DISC20" -> 0.20;
-                    case "VIP50" -> 0.50;
-                    default -> {
-                        System.out.println("❌ Invalid coupon.");
-                        continue;
-                    }
-                };
-            }
-
-            System.out.println("❌ Invalid input.");
-        }
-    }
 }
