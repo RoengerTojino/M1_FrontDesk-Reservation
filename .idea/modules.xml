@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/M1_FrontDeskReservation.iml" filepath="$PROJECT_DIR$/M1_FrontDeskReservation.iml" />
+      <module fileurl="file://$PROJECT_DIR$/CruiseSystem.iml" filepath="$PROJECT_DIR$/CruiseSystem.iml" />
     </modules>
   </component>
 </project>

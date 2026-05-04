@@ -51,7 +51,9 @@ public class Main {
                 case "1" -> createReservation();
                 case "2" -> manageReservation();
                 case "3" -> manageGuests();
-                case "4" -> { return; }
+                case "4" -> {
+                    return;
+                }
                 default -> System.out.println("Invalid choice.");
             }
         }
@@ -121,8 +123,35 @@ public class Main {
             }
         }
 
+        PaymentFramework payment = null;
 
+        switch (choice) {
+            case "1" -> payment = new CashPayment(baseAmount, discountRate);
+            case "2" -> payment = new CardPayment(baseAmount, discountRate, card);
+            case "3" -> payment = new EWalletPayment(baseAmount, discountRate, wallet);
+        }
 
+        payment.processInvoice();
+
+        if (!payment.isSuccessful()) {
+            System.out.println("❌ Payment Failed.");
+            return;
+        }
+
+// computed values
+        double discountAmount = baseAmount - payment.getDiscountedAmount();
+        double vat = payment.getVatAmount();
+        double finalTotal = payment.getTotalPayable();
+
+// SAVE PAYMENT RECORD (Requirement 1)
+        repo.savePayment(
+                reservationId,
+                baseAmount,
+                discountAmount,
+                vat,
+                finalTotal,
+                reference
+        );
 
 
         // 6. SAVE 🔥
@@ -175,12 +204,12 @@ public class Main {
 
                 switch (action) {
                     case "1" -> repo.checkOut(reservationId);
-                    case "2" -> { continue; }
+                    case "2" -> {
+                        continue;
+                    }
                     default -> System.out.println("Invalid option.");
                 }
-            }
-
-            else if (status.equalsIgnoreCase("Pending")) {
+            } else if (status.equalsIgnoreCase("Pending")) {
                 System.out.println("\n[1] Check-In");
                 System.out.println("[2] Move Reservation");
                 System.out.println("[3] Cancel Reservation");
@@ -192,7 +221,9 @@ public class Main {
                     case "1" -> repo.checkIn(reservationId);
                     case "2" -> moveReservation(reservationId); // ✅ works now
                     case "3" -> repo.cancelReservation(reservationId);
-                    case "4" -> { continue; }
+                    case "4" -> {
+                        continue;
+                    } 
                     default -> System.out.println("Invalid option.");
                 }
             }
@@ -308,4 +339,35 @@ public class Main {
 
         repo.moveReservation(reservationId, cabinId, sailingId);
     }
+
+    // CREATE PAYMENT OBJECT
+    PaymentFramework payment = switch (choice) {
+        case "1" -> new CashPayment(baseAmount, discountRate);
+        case "2" -> new CardPayment(baseAmount, discountRate, card);
+        case "3" -> new EWalletPayment(baseAmount, discountRate, wallet);
+        default -> null;
+    };
+
+// PROCESS PAYMENT
+payment.processInvoice();
+
+// VALIDATE RESULT
+if(!payment.isSuccessful())
+
+    {
+        System.out.println("❌ Payment Failed.");
+        return;
+    }
+
+    // GET FINAL VALUES
+    double discountAmount = baseAmount - payment.getDiscountedAmount();
+    double vat = payment.getVatAmount();
+    double finalTotal = payment.getTotalPayable();
+
+    // SAVE PAYMENT
+    int reservationId = repo.createReservation(guestId, cabinId, pax, sailingId);
+    String reference = "CR-" + String.format("%06d", reservationId);
+
+repo.savePayment(reservationId,baseAmount,discountAmount,vat,finalTotal,reference);
+
 }
