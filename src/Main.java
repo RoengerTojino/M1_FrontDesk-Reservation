@@ -121,7 +121,35 @@ public class Main {
             }
         }
 
+        PaymentFramework payment = null;
 
+        switch (choice) {
+            case "1" -> payment = new CashPayment(baseAmount, discountRate);
+            case "2" -> payment = new CardPayment(baseAmount, discountRate, card);
+            case "3" -> payment = new EWalletPayment(baseAmount, discountRate, wallet);
+        }
+
+        payment.processInvoice();
+
+        if (!payment.isSuccessful()) {
+            System.out.println("❌ Payment Failed.");
+            return;
+        }
+
+// computed values
+        double discountAmount = baseAmount - payment.getDiscountedAmount();
+        double vat = payment.getVatAmount();
+        double finalTotal = payment.getTotalPayable();
+
+// SAVE PAYMENT RECORD (Requirement 1)
+        repo.savePayment(
+                reservationId,
+                baseAmount,
+                discountAmount,
+                vat,
+                finalTotal,
+                reference
+        );
 
 
 

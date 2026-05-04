@@ -633,4 +633,21 @@ VALUES (?, ?, ?, ?, ?)
         }
         return false;
     }
+    public void savePayment(int reservationId, double amount,
+                            double discount, double vat,
+                            double total, String reference) {
+        String sql = "INSERT INTO payments (reservation_id, amount, discount, vat, total, reference) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, reservationId);
+            ps.setDouble(2, amount);
+            ps.setDouble(3, discount);
+            ps.setDouble(4, vat);
+            ps.setDouble(5, total);
+            ps.setString(6, reference);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
