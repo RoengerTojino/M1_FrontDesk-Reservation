@@ -368,13 +368,6 @@ if(!payment.isSuccessful())
     int reservationId = repo.createReservation(guestId, cabinId, pax, sailingId);
     String reference = "CR-" + String.format("%06d", reservationId);
 
-repo.savePayment(
-    reservationId,
-    baseAmount,
-    discountAmount,
-    vat,
-    finalTotal,
-    reference
-);
+repo.savePayment(reservationId,baseAmount,discountAmount,vat,finalTotal,reference);
 
 }
