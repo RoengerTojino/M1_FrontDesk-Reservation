@@ -1,7 +1,7 @@
 public class Guest {
-    private String GUEST_ID;
-    private String FIRST_NAME;
-    private String LAST_NAME;
+    private final String GUEST_ID;
+    private final String FIRST_NAME;
+    private final String LAST_NAME;
 
     public Guest(String guestId, String firstName, String lastName) {
         this.GUEST_ID = guestId;

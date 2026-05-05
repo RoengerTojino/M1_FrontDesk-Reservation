@@ -319,7 +319,7 @@ public class SystemRepository {
         return null;
     }
 
-    public boolean guestExists(String guestId) {
+    public boolean isGuestExists(String guestId) {
         String sql = "SELECT * FROM guests WHERE guest_id = ?";
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement ps = conn.prepareStatement(sql)) {

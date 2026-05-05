@@ -8,7 +8,7 @@ public abstract class PaymentFramework {
     protected double discountedAmount;
     protected double vatAmount;
     protected double totalPayable;
-    protected boolean success;
+    protected boolean isSuccess;
 
     private static final int BOX_WIDTH = 52;
 
@@ -18,7 +18,7 @@ public abstract class PaymentFramework {
     }
 
     // ── ABSTRACT STEP ──
-    abstract boolean validatePayment();
+    abstract boolean isValidDatePayment();
 
     // ── CORE LOGIC ──
     protected void computeAmounts() {
@@ -36,9 +36,9 @@ public abstract class PaymentFramework {
 
         // Step 1 – Validate
         printStep("[Step 1] Validating payment...");
-        if (!validatePayment()) {
+        if (!isValidDatePayment()) {
             System.out.println("        ERROR  Payment validation failed.");
-            success = false;
+            isSuccess = false;
             return;
         }
         System.out.println("        OK  Payment validated successfully.");
@@ -62,7 +62,7 @@ public abstract class PaymentFramework {
         printStep("[Step 3] Finalizing transaction...");
         finalizeTransaction();
 
-        success = true;
+        isSuccess = true;
     }
 
     protected void finalizeTransaction() {
@@ -71,7 +71,7 @@ public abstract class PaymentFramework {
 
     // getter for BookingManager (IMPORTANT)
     public boolean isSuccessful() {
-        return success;
+        return isSuccess;
     }
 
     public double getTotalPayable() {
