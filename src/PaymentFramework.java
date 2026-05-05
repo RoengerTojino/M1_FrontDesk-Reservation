@@ -18,7 +18,7 @@ public abstract class PaymentFramework {
     }
 
     // ── ABSTRACT STEP ──
-    abstract boolean isValidDatePayment();
+    abstract boolean isValidatePayment();
 
     // ── CORE LOGIC ──
     protected void computeAmounts() {
@@ -36,7 +36,7 @@ public abstract class PaymentFramework {
 
         // Step 1 – Validate
         printStep("[Step 1] Validating payment...");
-        if (!isValidDatePayment()) {
+        if (!isValidatePayment()) {
             System.out.println("        ERROR  Payment validation failed.");
             isSuccess = false;
             return;
