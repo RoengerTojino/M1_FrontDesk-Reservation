@@ -5,9 +5,11 @@ import java.time.format.DateTimeParseException;
 public class SystemRepository {
 
     private static final String DB_URL = "jdbc:sqlite:Cruise_System.db";
+
     private Connection connect() throws SQLException {
         return DriverManager.getConnection(DB_URL);
     }
+
     public int createReservation(int guestId, String cabinId, int pax, int sailingId) {
 
         int reservationId = 0; // 🔥 ADD THIS
