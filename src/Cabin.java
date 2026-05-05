@@ -1,17 +1,17 @@
 public class Cabin {
-    private String CABIN_ID;
-    private String CATEGORY;
+    private String cabinId;
+    private String category;
 
     public Cabin(String cabinId, String category) {
-        this.CABIN_ID = cabinId;
-        this.CATEGORY = category;
+        this.cabinId = cabinId;
+        this.category = category;
     }
 
     public String getCabinId() {
-        return CABIN_ID;
+        return cabinId;
     }
 
     public String getCategory() {
-        return CATEGORY;
+        return category;
     }
 }
