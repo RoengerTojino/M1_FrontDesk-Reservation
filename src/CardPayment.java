@@ -6,7 +6,9 @@ public class CardPayment extends PaymentFramework {
         this.cardNumber = cardNumber;
     }
 
-    boolean isValidDatePayment() {
+    @Override
+    boolean validatePayment() {
         return cardNumber != null && cardNumber.length() == 16;
     }
+
 }

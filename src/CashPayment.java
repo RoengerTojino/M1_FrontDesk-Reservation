@@ -2,7 +2,8 @@ public class CashPayment extends PaymentFramework {
     public CashPayment(double amount, double discountRate) {
         super(amount, discountRate);
     }
-    boolean isValidDatePayment() {
+    @Override
+    boolean validatePayment() {
         return amount > 0;
     }
 }
